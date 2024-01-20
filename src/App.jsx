@@ -163,7 +163,7 @@ const App = () => {
 		// "KENO",
 	];
 	// const domain = "192.168.0.23";
-	const domain = "neongame.tk:444";
+	const domain = "18.192.94.96";
 	useEffect(async () => {
 		async function run() {
 			window.addEventListener("popstate", (e) => {
