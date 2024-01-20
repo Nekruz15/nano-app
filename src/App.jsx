@@ -617,13 +617,6 @@ const App = () => {
 				})
 				.catch((err) => console.error(err));
 		}
-		if (e == "home") {
-			setPopout(<ScreenSpinner size="medium" />);
-			await sendRequest("POST", "getUser", fetchedUser).then((data) => {
-				setUserData(data.userData);
-				setPopout(null);
-			});
-		}
 	};
 	function getTatals(data) {
 		var res = 0;
