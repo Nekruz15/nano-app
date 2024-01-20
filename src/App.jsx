@@ -82,7 +82,6 @@ const App = () => {
 	];
 	const [screen, setScreen] = useState("home");
 	const [modal, setModal] = useState(null);
-	const [popout, setPopout] = useState(<ScreenSpinner size="medium" />);
 	const [userData, setUserData] = useState({});
 	const [fetchedUser, setUser] = useState(null);
 	const [loading, setLoading] = useState(1);
