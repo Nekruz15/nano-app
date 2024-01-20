@@ -163,7 +163,6 @@ const App = () => {
 		// "KENO",
 	];
 	// const domain = "192.168.0.23";
-	const domain = "testbot234.na4u.ru";
 	useEffect(async () => {
 		async function run() {
 			window.addEventListener("popstate", (e) => {
@@ -432,188 +431,6 @@ const App = () => {
 		setActivity("error");
 		setPopout(null);
 	}
-	function connect(game) {
-		var ws = window.socket;
-		if (!ws) {
-			ws = {
-				disconnected: true,
-			};
-		}
-		if (ws.disconnected) {
-			ws = io(`wss://${domain}`, {
-				secure: true,
-				transports: ["websocket"],
-				query: {
-					params: JSON.stringify({
-						photo: {
-							_100: fetchedUser.photo_100,
-							_200: fetchedUser.photo_200,
-						},
-						nick: {
-							first: fetchedUser.first_name,
-							last: fetchedUser.last_name,
-						},
-						referer: window.location.search,
-						uid: fetchedUser.id,
-					}),
-				},
-			});
-			window.socket = ws;
-			ws.on("connect", async () => {
-				console.log("Connected!");
-				ws.emit("message", {
-					game,
-					referer: window.location.search,
-					type: "init",
-					user: fetchedUser.id,
-				});
-			});
-			ws.on("disconnect", (info) => {
-				setConnectToWs(false);
-				console.log(info);
-				if (info.match(/^transport close$/i)) {
-					return showError({
-						desc: "Вы были отключены от сервера!",
-						button: {
-							back: true,
-							event: () => {
-								connect(game);
-							},
-							text: "Переподключиться",
-							backEvent: () => {
-								setActivity("home");
-							},
-						},
-					});
-				}
-				console.log("Disconnected!");
-			});
-			ws.on(`exit`, () => {
-				ws.disconnect();
-				return showError({
-					desc: "Вы были отключены от игры от бездействия в течении 5 минут!",
-					button: {
-						back: true,
-						backEvent: () => {
-							setActivity("home");
-						},
-						event: () => {
-							connect(game);
-						},
-						text: "Переподключиться",
-					},
-				});
-			});
-			events(ws, game);
-		} else {
-			window?.socket?.disconnect();
-			connect(game);
-		}
-	}
-	function events(ws, game) {
-		ws.on("message", async (msg) => {
-			if (msg.type === "init") {
-				if (msg.status) {
-					var j = state;
-					j.token = msg.token;
-					j.gameData.game = game;
-					setState(j);
-					setGameToken(msg.token);
-					ws.emit("message", {
-						room: msg.roomId,
-						token: msg.token,
-						type: "join",
-						user: fetchedUser.id,
-						game,
-					});
-					setActivity(game);
-				} else {
-					return showError({
-						desc: "Вы уже зашли с другого устройства!",
-						button: {
-							back: true,
-							backEvent: () => {
-								setActivity("home");
-							},
-							event: () => {
-								connect(game);
-							},
-							text: "Попробовать снова",
-						},
-					});
-				}
-			} else if (msg.type === "update") {
-				startGraphAnimator(msg);
-				if (
-					msg.state === 1 &&
-					(msg.game === "mines" ||
-						msg.game === "tower" ||
-						msg.game === "goldwest")
-				) {
-					var j = state;
-					j.gameData.bombs = msg.bombs;
-					j.getLastProvBool = true;
-					j.getLastProv = new Date().getTime();
-					j.gameData.game = msg.game;
-					setState(j);
-				}
-				if (msg?.balance) {
-					setUserData((v) => ({ ...v, coins: msg.balance.coins }));
-				}
-				setGameData(msg);
-				setLoading(0);
-				if (
-					msg.state === 2 &&
-					msg.game !== "mines" &&
-					msg.game !== "tower" &&
-					msg.game !== "thimble" &&
-					msg.game !== "goldwest"
-				) {
-					getTatals(msg);
-				}
-			} else if (msg.type === "setBet") {
-				if (msg.status) {
-					setUserData((data) => ({
-						...data,
-						coins: msg.private.balance.coins,
-					}));
-				} else {
-					if (msg.desc) {
-						setErrorInputGame({
-							error: true,
-							desc: msg.desc,
-						});
-					}
-				}
-			} else if (msg.type === "requestCall") {
-				if (msg.a === "getUser") {
-					await sendRequest("POST", "getUser", fetchedUser).then((data) => {
-						setUserData(data.userData);
-					});
-				}
-			}
-		});
-		ws.on(`error`, async (msg) => {
-			if (msg.type === "join") {
-				return showError({
-					desc: "Вы уже зашли с другого аккаунта!",
-					button: {
-						back: true,
-						backEvent: () => {
-							refreshData();
-							setActivity("home");
-							setPopout(<ScreenSpinner size="medium" />);
-							setLoading(0);
-						},
-						event: () => {
-							connect(game);
-						},
-						text: "Попробовать снова",
-					},
-				});
-			}
-		});
-	}
 	function refreshTop() {
 		setLoad(true);
 		setTimeout(async () => {
@@ -625,7 +442,7 @@ const App = () => {
 					var new_top_hour = [];
 					setTop(data.data);
 					var token = await bridge.send("VKWebAppGetAuthToken", {
-						app_id: 51731291,
+						app_id: 51833438,
 						scope: "",
 					});
 					data.data.day.rating.filter((x) => {
@@ -721,7 +538,7 @@ const App = () => {
 					setTop(data.data);
 					setLoading(0);
 					var token = await bridge.send("VKWebAppGetAuthToken", {
-						app_id: 51731291,
+						app_id: 51833438,
 						scope: "",
 					});
 					data.data.day.rating.filter((x) => {
@@ -808,50 +625,6 @@ const App = () => {
 			});
 		}
 	};
-	function sendRequest(method, query, user, dataQuery) {
-		return new Promise(function (resolve, reject) {
-			var url = `https://${domain}/capi`;
-			var xhr = new XMLHttpRequest();
-			xhr.open(method, url);
-			xhr.setRequestHeader("Content-Type", "application/json");
-			xhr.onreadystatechange = function () {
-				if (xhr.readyState === 4) {
-					xhr.onerror = () => {
-						console.error("ggerhrhyrt");
-						return showError({
-							desc: "Произошла ошибка на стороне сервера!",
-							button: {
-								back: false,
-								backEvent: () => {},
-								event: async () => {
-									setActivity("home");
-									setPopout(<ScreenSpinner size="medium" />);
-									setLoading(1);
-									await sendRequest("POST", "getUser", user).then((data) => {
-										setUserData(data.userData);
-										setLoad(false);
-										setPopout(null);
-										setLoading(0);
-									});
-								},
-								text: "Попробовать снова",
-							},
-						});
-					};
-					xhr.onload = () => {
-						resolve(JSON.parse(xhr.responseText));
-					};
-				}
-			};
-			var data = {
-				data: dataQuery ? dataQuery : {},
-				query,
-				referer: window.location.search,
-				uid: user.id,
-			};
-			xhr.send(JSON.stringify(data));
-		});
-	}
 	function getTatals(data) {
 		var res = 0;
 		var res1 = 0;
