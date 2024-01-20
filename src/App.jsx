@@ -163,7 +163,7 @@ const App = () => {
 		// "KENO",
 	];
 	// const domain = "192.168.0.23";
-	const domain = "91.201.52.115";
+	const domain = "testbot234.na4u.ru";
 	useEffect(async () => {
 		async function run() {
 			window.addEventListener("popstate", (e) => {
